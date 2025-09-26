@@ -231,7 +231,6 @@ class Speaker:
             c2 = sheet.cell(row=counter, column=2)
             c2.value = row[1].value
             counter += 1
-            print(self.cosine_similarity(e1, e2))
         wb.save(output_file)
 
     def cosine_similarity(self, e1, e2):
