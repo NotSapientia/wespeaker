@@ -24,6 +24,7 @@ import torchaudio.compliance.kaldi as kaldi
 import yaml
 import kaldiio
 from tqdm import tqdm
+import openpyxl
 
 from wespeaker.cli.hub import Hub
 from wespeaker.cli.utils import get_args
@@ -186,13 +187,32 @@ class Speaker:
         else:
             return self.cosine_similarity(e1, e2)
 
-    def compute_similarity_from_model(self, audio_path1: str, audio_path2: str) -> float:
-        e1 = torch.load(audio_path1)
-        e2 = torch.load(audio_path2)
+    def compute_similarity_from_model(self, embedding_file: str, embedding_file2: str) -> float:
+        e1 = torch.load(embedding_file)
+        e2 = torch.load(embedding_file2)
         if e1 is None or e2 is None:
             return 0.0
         else:
             return self.cosine_similarity(e1, e2)
+
+    def compute_similarity_from_excel(self, embedding_file: str, input_excel: str, output_file: str):
+        e1 = torch.load(embedding_file)
+        df = openpyxl.load_workbook(input_excel)
+        df1 = df.active
+        wb = openpyxl.Workbook()
+        sheet = wb.active
+        counter = 1
+        if output_file is None:
+            output_file = embedding_file.replace(".txt",".xlsx")
+        for row in df1.iter_rows(1, df1.max_row):
+            e2 = torch.load(row[0].value)
+            c1 = sheet.cell(row=counter, column=1)
+            c1.value = self.cosine_similarity(e1, e2)
+            c2 = sheet.cell(row=counter, column=2)
+            c2.value = row[1].value
+            counter += 1
+            print(self.cosine_similarity(e1, e2))
+        wb.save(output_file)
 
     def cosine_similarity(self, e1, e2):
         cosine_score = torch.dot(e1, e2) / (torch.norm(e1) * torch.norm(e2))
@@ -376,7 +396,9 @@ def main():
     elif args.task == 'similarity':
         print(model.compute_similarity(args.audio_file, args.audio_file2))
     elif args.task == 'similarity_from_model':
-        print(model.compute_similarity_from_model(args.audio_file, args.audio_file2))
+        print(model.compute_similarity_from_model(args.embedding_file, args.embedding_file2))
+    elif args.task == 'similarity_from_excel':
+        model.compute_similarity_from_excel(args.embedding_file, args.input_excel, args.output_file)
     elif args.task == 'diarization':
         diar_result = model.diarize(args.audio_file)
         if args.output_file is None:

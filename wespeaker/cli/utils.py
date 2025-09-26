@@ -28,6 +28,7 @@ def get_args():
                             'diarization_list',
                             'embedding_save_file',
                             'similarity_from_model',
+                            'similarity_from_excel'
                         ],
                         default='embedding',
                         help='task type')
@@ -74,6 +75,9 @@ def get_args():
     parser.add_argument('--audio_file', help='audio file')
     parser.add_argument('--audio_file2',
                         help='audio file2, specifically for similarity task')
+    parser.add_argument('--input_excel', help='input excel')
+    parser.add_argument('--embedding_file',help='embedding file')
+    parser.add_argument('--embedding_file2',help='embedding file3')
     parser.add_argument('--wav_scp',
                         help='path to wav.scp, for extract and saving '
                         'kaldi-stype embeddings')
