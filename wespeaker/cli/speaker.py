@@ -186,6 +186,14 @@ class Speaker:
         else:
             return self.cosine_similarity(e1, e2)
 
+    def compute_similarity_from_model(self, audio_path1: str, audio_path2: str) -> float:
+        e1 = torch.load(audio_path1)
+        e2 = torch.load(audio_path2)
+        if e1 is None or e2 is None:
+            return 0.0
+        else:
+            return self.cosine_similarity(e1, e2)
+
     def cosine_similarity(self, e1, e2):
         cosine_score = torch.dot(e1, e2) / (torch.norm(e1) * torch.norm(e2))
         cosine_score = cosine_score.item()
@@ -340,7 +348,7 @@ def main():
         else:
             model = load_model(args.language)
     else:
-        model = load_model(model_dir=args.pretrain)
+        model = load_model(model_name_or_path=args.pretrain)
     model.set_resample_rate(args.resample_rate)
     model.set_vad(args.vad)
     model.set_device(args.device)
@@ -367,6 +375,8 @@ def main():
                 writer(name, embedding)
     elif args.task == 'similarity':
         print(model.compute_similarity(args.audio_file, args.audio_file2))
+    elif args.task == 'similarity_from_model':
+        print(model.compute_similarity_from_model(args.audio_file, args.audio_file2))
     elif args.task == 'diarization':
         diar_result = model.diarize(args.audio_file)
         if args.output_file is None:
@@ -378,6 +388,13 @@ def main():
         utts, segment2labels = model.diarize_list(args.wav_scp)
         assert args.output_file is not None
         model.make_rttm(np.vstack(segment2labels), args.output_file)
+    elif args.task == 'embedding_save_file':
+        embedding = model.extract_embedding(args.audio_file)
+        if embedding is not None:
+            torch.save(embedding, args.output_file)
+            print('Succeed, see {}'.format(args.output_file))
+        else:
+            print('Fails to extract embedding')
     else:
         print('Unsupported task {}'.format(args.task))
         sys.exit(-1)

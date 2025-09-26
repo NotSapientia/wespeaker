@@ -26,6 +26,8 @@ def get_args():
                             'similarity',
                             'diarization',
                             'diarization_list',
+                            'embedding_save_file',
+                            'similarity_from_model',
                         ],
                         default='embedding',
                         help='task type')
