@@ -25,6 +25,7 @@ import yaml
 import kaldiio
 from tqdm import tqdm
 import openpyxl
+import yt_dlp
 
 from wespeaker.cli.hub import Hub
 from wespeaker.cli.utils import get_args
@@ -120,6 +121,25 @@ class Speaker:
             embeddings.append(batch_embs.detach().cpu().numpy())
         embeddings = np.vstack(embeddings)
         return embeddings
+
+    def download_embedding_save_file(self, short_name: str, long_name: str, url: str, input_excel: str):
+        yt_opts = {
+            'outtmpl': 'audio/'+short_name+'.%(ext)s',
+            'format': 'bestaudio/best',
+            'postprocessors': [{
+                'key': 'FFmpegExtractAudio',
+                'preferredcodec': 'mp3',
+                'preferredquality': '320',
+            }],
+        }
+        ydl = yt_dlp.YoutubeDL(yt_opts)
+        ydl.download(url)
+        embedding = self.extract_embedding('audio/' + short_name + '.mp3')
+        torch.save(embedding, 'embedding/' + short_name + '.pt')
+        df = openpyxl.load_workbook(input_excel)
+        df1 = df.active
+        df1.append(['embedding/' + short_name + '.pt', short_name, long_name, url])
+        df.save(input_excel)
 
     def extract_embedding(self, audio_path: str):
         pcm, sample_rate = torchaudio.load(audio_path,
@@ -399,6 +419,7 @@ def main():
         print(model.compute_similarity_from_model(args.embedding_file, args.embedding_file2))
     elif args.task == 'similarity_from_excel':
         model.compute_similarity_from_excel(args.embedding_file, args.input_excel, args.output_file)
+        print('Success')
     elif args.task == 'diarization':
         diar_result = model.diarize(args.audio_file)
         if args.output_file is None:
@@ -410,6 +431,8 @@ def main():
         utts, segment2labels = model.diarize_list(args.wav_scp)
         assert args.output_file is not None
         model.make_rttm(np.vstack(segment2labels), args.output_file)
+    elif args.task == 'download_embedding_save_file':
+        model.download_embedding_save_file(args.short_name, args.long_name, args.url, args.input_excel)
     elif args.task == 'embedding_save_file':
         embedding = model.extract_embedding(args.audio_file)
         if embedding is not None:

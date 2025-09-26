@@ -28,7 +28,8 @@ def get_args():
                             'diarization_list',
                             'embedding_save_file',
                             'similarity_from_model',
-                            'similarity_from_excel'
+                            'similarity_from_excel',
+                            'download_embedding_save_file',
                         ],
                         default='embedding',
                         help='task type')
@@ -78,6 +79,9 @@ def get_args():
     parser.add_argument('--input_excel', help='input excel')
     parser.add_argument('--embedding_file',help='embedding file')
     parser.add_argument('--embedding_file2',help='embedding file3')
+    parser.add_argument('--short_name',help='short name')
+    parser.add_argument('--long_name',help='long name')
+    parser.add_argument('--url',help='url')
     parser.add_argument('--wav_scp',
                         help='path to wav.scp, for extract and saving '
                         'kaldi-stype embeddings')
