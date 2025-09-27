@@ -126,6 +126,15 @@ class Speaker:
     def download_embedding_save_file(self, short_name: str, long_name: str, url: str, input_excel: str):
         df = openpyxl.load_workbook(input_excel)
         df1 = df.active
+
+        #Check download url
+        for row in df1.iter_rows(1, df1.max_row):
+            if url == row[3].value:
+                print("This audio is already downloaded before")
+                return
+
+
+        #Check duplicate short name
         counter = 1
         new_short_name = short_name
         check_duplicate = 1
