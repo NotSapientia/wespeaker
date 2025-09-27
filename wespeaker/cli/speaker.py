@@ -15,6 +15,7 @@
 
 import os
 import sys
+from operator import truediv
 
 import numpy as np
 from silero_vad import load_silero_vad, read_audio, get_speech_timestamps
@@ -123,8 +124,23 @@ class Speaker:
         return embeddings
 
     def download_embedding_save_file(self, short_name: str, long_name: str, url: str, input_excel: str):
+        df = openpyxl.load_workbook(input_excel)
+        df1 = df.active
+        counter = 1
+        new_short_name = short_name
+        check_duplicate = 1
+        while check_duplicate == 1:
+            check_duplicate = 0
+            for row in df1.iter_rows(1, df1.max_row):
+                if new_short_name == row[1].value:
+                    new_short_name = short_name + "_" + str(counter)
+                    check_duplicate = 1
+                    counter += 1
+                    break
+
         yt_opts = {
-            'outtmpl': 'audio/'+short_name+'.%(ext)s',
+            'outtmpl': 'audio/'+new_short_name+'.%(ext)s',
+            'cookiesfrombrowser': ('firefox', ),
             'format': 'bestaudio/best',
             'postprocessors': [{
                 'key': 'FFmpegExtractAudio',
@@ -134,11 +150,10 @@ class Speaker:
         }
         ydl = yt_dlp.YoutubeDL(yt_opts)
         ydl.download(url)
-        embedding = self.extract_embedding('audio/' + short_name + '.mp3')
-        torch.save(embedding, 'embedding/' + short_name + '.pt')
-        df = openpyxl.load_workbook(input_excel)
-        df1 = df.active
-        df1.append(['embedding/' + short_name + '.pt', short_name, long_name, url])
+        embedding = self.extract_embedding('audio/' + new_short_name + '.mp3')
+        torch.save(embedding, 'embedding/' + new_short_name + '.pt')
+
+        df1.append(['embedding/' + new_short_name + '.pt', new_short_name, long_name, url])
         df.save(input_excel)
 
     def extract_embedding(self, audio_path: str):
